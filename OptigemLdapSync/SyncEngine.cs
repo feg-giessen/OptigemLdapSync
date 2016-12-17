@@ -1,73 +1,289 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.DirectoryServices.Protocols;
 using System.Linq;
+using OptigemLdapSync.Models;
 
 namespace OptigemLdapSync
 {
     internal class SyncEngine
     {
-        private OptigemConnector optigem = new OptigemConnector(@"C:\temp\fegt3");
+        private readonly ISyncConfiguration configuration;
 
-        public void Do()
+        private readonly OptigemConnector optigem;
+
+        private readonly LdapConnector ldap;
+
+        private readonly GroupWorker groups;
+
+        public SyncEngine(ISyncConfiguration configuration)
         {
-            // 0. Set bdf4=Null where bdf4=0
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
+
+            this.configuration = configuration;
+
+            this.optigem = new OptigemConnector(this.configuration.OptigemDatabasePath);
+
+            string ldapConnection = this.optigem.GetLdapConnectionString();
+
+            if (string.IsNullOrEmpty(ldapConnection))
+                throw new InvalidOperationException("No LDAP connection configured.");
+
+            var parser = new LdapConnectionStringParser { ConnectionString = ldapConnection };
+            this.ldap = new LdapConnector(parser.Server, parser.Port, AuthType.Basic, parser.User, parser.Password, 100, this.configuration.WhatIf);
+
+            this.groups = new GroupWorker(this.configuration, this.ldap, this.optigem);
+        }
+
+        public SyncResult Do(ITaskReporter reporter)
+        {
+            if (reporter == null)
+                throw new ArgumentNullException(nameof(reporter));
+
+            // 1: Group metadata
+            // 2: Prepare new users
+            // 3: Sync users
+            // 4: Check orphans
+            // 5: Syng group membership
+            reporter.Init(5);
+
+            // Read LDAP groups and sync meta data.
+            this.groups.SyncMetadata(reporter);
+
+            // Clean-up database
             this.optigem.SetCustomFieldsToNull();
 
-            // 1. IntranetNr und -PW vergeben
-            int intranetUid = this.optigem.GetNextIntranetUserId();
+            var result = new SyncResult();
 
-            IList<PersonIndexModel> persons = this.optigem.GetNewPersons().ToList();
-            foreach (var person in persons)
+            // Create sync meta data in Optigem for new users.
+            result.Created = this.CreateNewLdapUsers(reporter);
+
+            IList<PersonModel> persons = this.optigem.GetAllPersons()
+                .ToList();
+            
+            reporter.StartTask("Personen abgleichen", persons.Count + 1);
+
+            reporter.Progress("LDAP-Benutzer laden");
+            List<SearchResultEntry> allPersonUsers = this.ldap.PagedSearch("(&(objectClass=fegperson))", this.configuration.LdapDirectoryBaseDn, LdapBuilder.AllAttributes) //new[] { "cn", "dn", "syncuserid" }
+                .SelectMany(s => s.OfType<SearchResultEntry>())
+                .ToList();
+
+            foreach (PersonModel person in persons)
             {
-                string username = (person.Vorname?.Trim() + "." + person.Nachname?.Trim()).Trim('.');
+                reporter.Progress(person.Username);
 
-                person.Username = username.Length > 50 ? username.Substring(0, 50) : username;
-                person.Password = this.CalculatePassword();
-                person.IntranetUserId = intranetUid++;
+                var existingUser = allPersonUsers.FirstOrDefault(u => u.Attributes["syncuserid"][0]?.ToString() == person.SyncUserId.ToString());
+                this.SyncUser(reporter, person, existingUser);
+
+                if (person.Aenderung)
+                {
+                    this.optigem.SetChangedFlag(person.Nr, false);
+                }
+
+                if (existingUser != null)
+                {
+                    allPersonUsers.Remove(existingUser);
+                }
             }
 
-            this.optigem.SetIntranetUserIds(persons);
+            reporter.StartTask("Offene LDAP-Benutzer abgeleichen", allPersonUsers.Count);
+            foreach (SearchResultEntry entry in allPersonUsers)
+            {
+                reporter.Progress(entry.DistinguishedName);
+            }
 
-            // 2. Nicht-Mitglied-Benutzer deaktivieren
+            this.groups.SyncMembership(reporter);
+
+            return result;
+        }
+
+        private int CreateNewLdapUsers(ITaskReporter reporter)
+        {
+            IList<PersonModel> persons = this.optigem.GetNewPersons().ToList();
+            reporter.StartTask("Neue Personen in OPTIGEM vorbereiten", persons.Count);
+
+            if (persons.Any())
+            {
+                int intranetUid = this.optigem.GetNextSyncUserId();
+
+                foreach (var person in persons)
+                {
+                    reporter.Progress(person.Username);
+
+                    string username = LdapBuilder.GetCn((person.Vorname?.Trim() + "." + person.Nachname?.Trim()).Trim('.'));
+
+                    person.Username = username.Length > 50 ? username.Substring(0, 50) : username;
+                    person.Password = this.CalculatePassword();
+                    person.SyncUserId = intranetUid++;
+
+                    reporter.Log(person.Username + " mit Id " + person.SyncUserId + " angelegt.");
+                }
+
+                this.optigem.SetIntranetUserIds(persons);
+
+                return persons.Count;
+            }
+
+            return 0;
+        }
+
+        private void SyncUser(ITaskReporter reporter, PersonModel model, SearchResultEntry entry)
+        {
+            ICollection<PersonenkategorieModel> kategorien = this.groups.GetKategorien(model.Nr);
+                // this.optigem.GetPersonenkategorien(model.Nr).ToList();
+
+            bool disabled = this.IsDisabled(model, kategorien);
+
+            string baseDn;
+            string requiredBaseDn;
+
+            if (disabled)
+            {
+                requiredBaseDn = this.configuration.LdapInaktiveBenutzerBaseDn;
+                baseDn = requiredBaseDn;
+            }
+            else
+            {
+                requiredBaseDn = this.configuration.LdapBenutzerBaseDn;
+                baseDn = (kategorien.Any(k => k.Name == "Mitglied") ? "ou=mitglieder," : "ou=extern,") + requiredBaseDn;
+            }
+
+            string cn = LdapBuilder.GetCn(model.Username);
+            string dn = $"cn={cn},{baseDn}";
+
+            if (entry == null)
+            {
+                SearchResultEntry[] searchResult = this.ldap
+                    .PagedSearch($"(&(objectClass=inetOrgPerson)(syncUserId={model.SyncUserId}))", this.configuration.LdapDirectoryBaseDn, LdapBuilder.AllAttributes)
+                    .SelectMany(s => s.OfType<SearchResultEntry>())
+                    .ToArray();
+
+                if (searchResult.Length == 0)
+                {
+                    DirectoryAttribute[] attributes = LdapBuilder.GetAllAttributes(model).ToArray();
+
+                    this.ldap.AddEntry(dn, attributes);
+                    Log.Source.TraceEvent(TraceEventType.Information, 0, "Added new LDAP user '{0}'.", dn);
+                    reporter.Log($"Neuer Benutzer hinzugefügt: {dn}");
+                }
+                else
+                {
+                    entry = searchResult.First();
+                }
+            }
+
+            if (entry != null)
+            {
+                string oldDn = entry.DistinguishedName;
+                string oldBaseDn = oldDn.Split(new[] { ',' }, 2).Last();
+
+                Log.Source.TraceEvent(TraceEventType.Verbose, 0, "Syncing LDAP user '{0}'.", oldDn);
+
+                if (!oldDn.EndsWith(requiredBaseDn))
+                {
+                    this.ldap.MoveEntry(oldDn, baseDn, $"cn={cn}");
+                    Log.Source.TraceEvent(TraceEventType.Information, 0, "Moved LDAP user from '{0}' to '{1}'.", oldDn, dn);
+                    reporter.Log($"Benutzer von {oldDn} nach {dn} verschoben.");
+                }
+                else
+                {
+                    string oldCn = entry.Attributes["cn"][0]?.ToString();
+                    if (oldCn != cn)
+                    {
+                        dn = $"cn={cn},{oldBaseDn}";
+                        this.ldap.MoveEntry(oldDn, oldBaseDn, $"cn={cn}");
+                        Log.Source.TraceEvent(TraceEventType.Information, 0, "Renamed LDAP user from '{0}' to '{1}'.", oldCn, cn);
+                        reporter.Log($"Benutzer von {oldCn} nach {cn} umbenannt.");
+                    }
+                }
+
+                var diffAttributes = LdapBuilder.GetDiff(
+                        LdapBuilder.GetUpdateAttributes(model),
+                        entry,
+                        LdapBuilder.CreateAttributes.Union(new[] { "cn", "dn" }).ToArray())
+                    .ToArray();
+
+                if (diffAttributes.Any())
+                {
+                    this.ldap.ModifyEntry(dn, diffAttributes);
+                    Log.Source.TraceEvent(TraceEventType.Information, 0, "Updated LDAP user '{0}'.", dn);
+                    foreach (var diff in diffAttributes)
+                    {
+                        var oldAttr = entry.Attributes.Values?.OfType<DirectoryAttribute>().FirstOrDefault(a => string.Equals(a.Name, diff.Name, StringComparison.InvariantCultureIgnoreCase));
+                        string oldValue = oldAttr == null ? string.Empty : string.Join("', '", oldAttr.GetValues<string>());
+                        Debug.Assert(oldValue != string.Join("', '", diff.GetValues<string>()));
+                        reporter.Log($"{diff.Name} auf '{string.Join("', '", diff.GetValues<string>())}' gesetzt (alt: '{oldValue}').");
+                    }
+
+                    foreach (string attributeChange in diffAttributes.SelectMany(Log.Print))
+                    {
+                        Log.Source.TraceEvent(TraceEventType.Verbose, 0, "Updated LDAP user '{0}': {1}", cn, attributeChange);
+                    }
+                }
+            }
+
+            if (!disabled)
+            {
+                foreach (PersonenkategorieModel kategorie in kategorien)
+                {
+                    LdapGroup group = this.groups.Get(kategorie);
+
+                    if (group == null)
+                    {
+                        Log.Source.TraceEvent(TraceEventType.Warning, 0, "LDAP group does not exist: '{0}'", kategorie.Name);
+                    }
+                    else
+                    {
+                        group.MemberList.Add(dn);
+                    }
+                }
+            }
+        }
+
+        private bool IsDisabled(PersonModel model, ICollection<PersonenkategorieModel> kategorien)
+        {
+            bool mitglied = kategorien.Any(k => k.Name == "Mitglied");
+
+            if (mitglied)
+            {
+                if (model.StartDatum.HasValue && model.StartDatum.Value > DateTime.Now)
+                    return true;
+
+                if (model.EndDatum.HasValue && model.EndDatum.Value < DateTime.Now)
+                    return true;
+            }
+
+            return !kategorien.Any();
         }
 
         private string CalculatePassword()
         {
-            const int PinLaenge = 8;
-            const string CharList1 = "abcdefghijklmnopqrstuvwxyz";
-            const string CharList2 = "1234567890";
+            const int pinLaenge = 8;
+            const string charList1 = "abcdefghijklmnopqrstuvwxyz";
+            const string charList2 = "1234567890";
 
-            string tmpDlPin = string.Empty;
+            char[] result = new char[pinLaenge];
             int i;
 
-            Random rand = new Random(DateTime.UtcNow.Millisecond);
+            Random rand = new Random(Environment.TickCount);
 
-            for (i = 0; i < PinLaenge; i++)
+            for (i = 0; i < pinLaenge; i++)
             {
                 int pos;
-                if (i < 4)
-                {
-                    do
-                    {
-                        pos = (int)(CharList1.Length * rand.NextDouble());
-                    }
-                    while (pos < 0 || pos >= CharList1.Length);
+                string list = i < 4 ? charList1 : charList2;
 
-                    tmpDlPin = tmpDlPin + CharList1.Substring(pos, 1);
-                }
-                else
+                do
                 {
-                    do
-                    {
-                        pos = (int)(CharList2.Length * rand.NextDouble());
-                    }
-                    while (pos < 0 || pos >= CharList2.Length);
-
-                    tmpDlPin = tmpDlPin + CharList2.Substring(pos, 1);
+                    pos = (int)(list.Length * rand.NextDouble());
                 }
+                while (pos < 0 || pos >= list.Length);
+
+                result[i] = list[pos];
             }
 
-            return tmpDlPin;
+            return new string(result);
         }
     }
 }

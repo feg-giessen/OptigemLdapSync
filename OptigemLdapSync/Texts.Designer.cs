@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace OptigemLdapSync.Properties {
+namespace OptigemLdapSync {
     using System;
     
     
@@ -22,14 +22,14 @@ namespace OptigemLdapSync.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources {
+    internal class Texts {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
         private static global::System.Globalization.CultureInfo resourceCulture;
         
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal Resources() {
+        internal Texts() {
         }
         
         /// <summary>
@@ -39,7 +39,7 @@ namespace OptigemLdapSync.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("OptigemLdapSync.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("OptigemLdapSync.Texts", typeof(Texts).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -61,12 +61,20 @@ namespace OptigemLdapSync.Properties {
         }
         
         /// <summary>
-        ///   Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
+        ///   Sucht eine lokalisierte Zeichenfolge, die Unter dem angegebenen Pfad (&apos;{0}&apos;) existiert keine Optigem-Address-Datenbank ({1}). ähnelt.
         /// </summary>
-        internal static System.Drawing.Bitmap OptigemLdapSyncLogo {
+        internal static string NoAddressDatabase {
             get {
-                object obj = ResourceManager.GetObject("OptigemLdapSyncLogo", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
+                return ResourceManager.GetString("NoAddressDatabase", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Unter dem angegebenen Pfad (&apos;{0}&apos;) existiert keine Optigem-System-Datenbank ({1}). ähnelt.
+        /// </summary>
+        internal static string NoSystemDatabase {
+            get {
+                return ResourceManager.GetString("NoSystemDatabase", resourceCulture);
             }
         }
     }
