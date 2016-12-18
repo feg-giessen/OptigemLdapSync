@@ -112,8 +112,8 @@ namespace OptigemLdapSync
             pdfdoc.Add(table);
 
             pdfdoc.Add(new Paragraph(this.CreatePhrase("1.) Nach einem Klick rechts oben auf \"Login\" erscheint das Anmeldeformular")));
-            pdfdoc.Add(new Paragraph(this.CreatePhrase("2.) Der o.g.Benutzername kann mit Kleinbuchstaben und Punkt in der Mitte eingegeben werden")));
-            pdfdoc.Add(new Paragraph(this.CreatePhrase("3.) Das per eMail zugeschickte persönliche, geheime Passwort ist einzugeben")));
+            pdfdoc.Add(new Paragraph(this.CreatePhrase("2.) Der o.g. Benutzername kann mit Kleinbuchstaben und Punkt in der Mitte eingegeben werden")));
+            pdfdoc.Add(new Paragraph(this.CreatePhrase("3.) Das per E-Mail zugeschickte persönliche, geheime Passwort ist einzugeben")));
             pdfdoc.Add(new Paragraph(this.CreatePhrase("4.) Klick auf \"Anmelden\" gewährt den Intranetzugang, erkennbar durch den Login-Namen oben rechts")));
 
             pdfdoc.Add(new Paragraph(this.CreatePhrase("Nachdem der untere Abschnitt dieses Schreibens mit Kenntnisnahme der Datenschutzerklärung unterschrieben im Gemeindebüro (Fach) angekommen ist, wird an die bekannte bzw. noch anzugebende E-Mail-Adresse das Passwort verschickt (bitte vertraulich behandeln).")) { SpacingBefore = MillimetersToPoints(4), Alignment = Element.ALIGN_JUSTIFIED });
