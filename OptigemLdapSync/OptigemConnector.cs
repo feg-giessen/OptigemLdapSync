@@ -37,9 +37,11 @@ IIF(Spender.bdf7=0,FALSE,TRUE) as NoAddress,
 Spender.[Straße] as Strasse, 
 Spender.[Telefon abends] as Telefon, 
 Spender.Telefax, 
+Spender.[Telefon mobil] as Mobiltelefon, 
 Spender.EMail, 
 Spender.PLZ as Plz, 
 Spender.Ort, 
+Spender.Zusatzort, 
 Spender.Land, 
 Spender.Geburtsdatum, 
 Spender.OutlookAdrBuchAenderFlag as Aenderung";
@@ -126,6 +128,46 @@ Spender.OutlookAdrBuchAenderFlag as Aenderung";
                 connection.Open();
 
                 return connection.Query<PersonModel>("SELECT " + PersonSelectString + " FROM Spender WHERE Spender.bdF4 > 0 AND Spender.bdF9 is NULL");
+            }
+        }
+
+        public IEnumerable<PersonModel> GetAllPersonsForPasswordMail()
+        {
+            using (var connection = new OleDbConnection(this.connectionString))
+            {
+                connection.Open();
+
+                return connection.Query<PersonModel>("SELECT " + PersonSelectString + " FROM Spender WHERE Spender.bdF4 > 0 AND Spender.bdF5 Is Not Null AND Spender.bdF6 Is Not Null AND Spender.bdF10 <> 0 AND Spender.bdF11 Is Null");
+            }
+        }
+
+        public void SetPasswordMailDate(int personId)
+        {
+            using (var connection = new OleDbConnection(this.connectionString))
+            {
+                connection.Open();
+                
+                connection.Execute(
+                    "UPDATE Spender SET bdF11=Now() WHERE Nr=@personId",
+                    new
+                    {
+                        personId
+                    });
+            }
+        }
+
+        public void SetPrintDate(int personId)
+        {
+            using (var connection = new OleDbConnection(this.connectionString))
+            {
+                connection.Open();
+                
+                connection.Execute(
+                    "UPDATE Spender SET bdF9=Now() WHERE Nr=@personId",
+                    new
+                    {
+                        personId
+                    });
             }
         }
 

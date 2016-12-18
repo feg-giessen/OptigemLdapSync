@@ -93,7 +93,7 @@
             this.grpAdd.Size = new System.Drawing.Size(452, 52);
             this.grpAdd.TabIndex = 2;
             this.grpAdd.TabStop = false;
-            this.grpAdd.Text = "Benutzer hinzufügen";
+            this.grpAdd.Text = "Benutzer auswählen";
             // 
             // btnAdd
             // 
@@ -102,7 +102,7 @@
             this.btnAdd.Name = "btnAdd";
             this.btnAdd.Size = new System.Drawing.Size(81, 23);
             this.btnAdd.TabIndex = 1;
-            this.btnAdd.Text = "Hinzufügen...";
+            this.btnAdd.Text = "Auswählen...";
             this.btnAdd.UseVisualStyleBackColor = true;
             this.btnAdd.Click += new System.EventHandler(this.OnAddClicked);
             // 

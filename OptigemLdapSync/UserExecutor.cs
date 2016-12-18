@@ -125,6 +125,11 @@ namespace OptigemLdapSync
         {
             this.AllowAdd = this.optigem != null || this.DesignMode;
             this.btnAdd.Enabled = !string.IsNullOrWhiteSpace(this.txbAddUsername.Text);
+
+            if (this.listedUsers.Count == 0)
+            {
+                this.txbAddUsername.Focus();
+            }
         }
 
         private void OnAddUsernameTextChanged(object sender, EventArgs e)

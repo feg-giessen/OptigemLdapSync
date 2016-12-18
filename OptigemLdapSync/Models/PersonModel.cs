@@ -34,11 +34,15 @@ namespace OptigemLdapSync.Models
 
         public string Ort { get; set; }
 
+        public string Zusatzort { get; set; }
+
         public string Land { get; set; }
 
         public string Telefon { get; set; }
 
         public string Telefax { get; set; }
+
+        public string Mobiltelefon { get; set; }
 
         public string EMail { get; set; }
 

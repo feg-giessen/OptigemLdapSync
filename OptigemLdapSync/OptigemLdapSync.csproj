@@ -83,8 +83,21 @@
     <Compile Include="Models\PersonKategorieZuordnung.cs" />
     <Compile Include="Models\PersonenkategorieModel.cs" />
     <Compile Include="Models\SyncResult.cs" />
+    <Compile Include="NewUserReport.cs" />
     <Compile Include="OptigemConnector.cs" />
     <Compile Include="Models\PersonModel.cs" />
+    <Compile Include="PasswordResetForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PasswordResetForm.Designer.cs">
+      <DependentUpon>PasswordResetForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PasswordMailForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PasswordMailForm.Designer.cs">
+      <DependentUpon>PasswordMailForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="PrintForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -102,6 +115,7 @@
     </Compile>
     <Compile Include="SyncConfiguration.cs" />
     <Compile Include="SyncEngine.cs" />
+    <Compile Include="TempFilemanager.cs" />
     <Compile Include="Texts.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -121,6 +135,12 @@
     </Compile>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PasswordResetForm.resx">
+      <DependentUpon>PasswordResetForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PasswordMailForm.resx">
+      <DependentUpon>PasswordMailForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="PrintForm.resx">
       <DependentUpon>PrintForm.cs</DependentUpon>
@@ -164,6 +184,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\OptigemLdapSyncLogo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="FegLogo.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

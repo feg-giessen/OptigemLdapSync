@@ -15,11 +15,14 @@ namespace OptigemLdapSync
     {
         private ISyncConfiguration configuration;
 
+        private readonly TempFilemanager tempFilemanager = new TempFilemanager();
+
         public MainForm()
         {
             this.InitializeComponent();
 
             this.configuration = new SyncConfiguration();
+            this.tempFilemanager.Init(true);
         }
 
         private void OnSyncClick(object sender, EventArgs e)
@@ -50,7 +53,8 @@ namespace OptigemLdapSync
                 optigem = null;
             }
 
-            LdapConnectionStringParser ldapSettings = optigem == null ? null : new LdapConnectionStringParser() { ConnectionString = optigem.GetLdapConnectionString() };
+            string connectionString = optigem?.GetLdapConnectionString();
+            LdapConnectionStringParser ldapSettings = string.IsNullOrWhiteSpace(connectionString) ? null : new LdapConnectionStringParser() { ConnectionString = connectionString };
 
             var settingsForm = new SettingsForm
             {
@@ -169,6 +173,20 @@ namespace OptigemLdapSync
         {
             var form = new PrintForm();
                             
+            form.ShowDialog();
+        }
+
+        private void OnPasswordMailClicked(object sender, EventArgs e)
+        {
+            var form = new PasswordMailForm();
+
+            form.ShowDialog();
+        }
+
+        private void OnPasswordResetClicked(object sender, EventArgs e)
+        {
+            var form = new PasswordResetForm();
+
             form.ShowDialog();
         }
     }

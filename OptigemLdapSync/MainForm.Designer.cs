@@ -17,6 +17,9 @@
             {
                 components.Dispose();
             }
+
+            this.tempFilemanager.Dispose();
+
             base.Dispose(disposing);
         }
 
@@ -104,8 +107,9 @@
             this.btnSendPasswordMail.Name = "btnSendPasswordMail";
             this.btnSendPasswordMail.Size = new System.Drawing.Size(100, 42);
             this.btnSendPasswordMail.TabIndex = 2;
-            this.btnSendPasswordMail.Text = "Passwort-Mail senden";
+            this.btnSendPasswordMail.Text = "Passwort-Mail senden...";
             this.btnSendPasswordMail.UseVisualStyleBackColor = true;
+            this.btnSendPasswordMail.Click += new System.EventHandler(this.OnPasswordMailClicked);
             // 
             // btnPrintUserdata
             // 
@@ -127,6 +131,7 @@
             this.btnResetPassword.TabIndex = 3;
             this.btnResetPassword.Text = "Passwort zurücksetzen...";
             this.btnResetPassword.UseVisualStyleBackColor = true;
+            this.btnResetPassword.Click += new System.EventHandler(this.OnPasswordResetClicked);
             // 
             // tvProtokol
             // 

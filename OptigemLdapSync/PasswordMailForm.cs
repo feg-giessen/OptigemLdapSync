@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Text;
 using System.Windows.Forms;
 
 namespace OptigemLdapSync
 {
-    public partial class PrintForm : Form
+    public partial class PasswordMailForm : Form
     {
         private readonly ISyncConfiguration configuration;
 
-        public PrintForm()
+        public PasswordMailForm()
         {
             this.InitializeComponent();
 
@@ -33,10 +34,21 @@ namespace OptigemLdapSync
             bool success = false;
             try
             {
-                var report = new NewUserReport(this.TempFileManager);
-                string reportName = report.Create(e.Person);
+                var body = new StringBuilder();
+                body
+                    .AppendLine(e.Person.Briefanrede + ",")
+                    .AppendLine()
+                    .AppendLine("hier kommt der zweite Teil der Zugangsdaten, das Passwort, das zum Login fürs FeG-Intranet benötigt wird.")
+                    .AppendLine()
+                    .AppendLine("Das Passwort (bitte vertraulich behandeln) lautet: " + e.Person.Password)
+                    .AppendLine("In ein paar Stunden ist der Zugang freigeschaltet.")
+                    .AppendLine()
+                    .AppendLine("Auf der Startseite im Intranet, rechts unten, kann unter \"Mein Benutzerkonto\" das Passwort geändert werden.")
+                    .AppendLine()
+                    .AppendLine("Viel Freude beim Lesen der internen Seiten.");
 
-                Process.Start(reportName);
+                string mailto = "mailto:" + e.Person.EMail + "?subject=FeG Intranet&body=" + Uri.EscapeUriString(body.ToString());
+                Process.Start(mailto);
                 success = true;
             }
             catch (Exception exception)
@@ -47,7 +59,7 @@ namespace OptigemLdapSync
             if (success && this.chkSetDate.Checked)
             {
                 var optigem = new OptigemConnector(this.configuration.OptigemDatabasePath);
-                optigem.SetPrintDate(e.Person.Nr);
+                optigem.SetPasswordMailDate(e.Person.Nr);
             }
         }
 
@@ -55,7 +67,7 @@ namespace OptigemLdapSync
         {
             var optigem = new OptigemConnector(this.configuration.OptigemDatabasePath);
 
-            foreach (var person in optigem.GetAllPersonsNotPrinted())
+            foreach (var person in optigem.GetAllPersonsForPasswordMail())
             {
                 this.userSelector.Add(person);
             }

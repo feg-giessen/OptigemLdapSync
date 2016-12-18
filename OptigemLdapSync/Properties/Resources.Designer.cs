@@ -63,6 +63,16 @@ namespace OptigemLdapSync.Properties {
         /// <summary>
         ///   Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap FegLogo {
+            get {
+                object obj = ResourceManager.GetObject("FegLogo", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap OptigemLdapSyncLogo {
             get {
                 object obj = ResourceManager.GetObject("OptigemLdapSyncLogo", resourceCulture);
