@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.DirectoryServices.Protocols;
+using System.IO;
 using System.Linq;
 using OptigemLdapSync.Models;
 
@@ -88,10 +89,11 @@ namespace OptigemLdapSync
                 }
             }
 
-            reporter.StartTask("Offene LDAP-Benutzer abgeleichen", allPersonUsers.Count);
+            reporter.StartTask("Offene LDAP-Benutzer abgleichen", allPersonUsers.Count);
             foreach (SearchResultEntry entry in allPersonUsers)
             {
                 reporter.Progress(entry.DistinguishedName);
+                reporter.Log("Manual action required.");
             }
 
             this.groups.SyncMembership(reporter);
@@ -139,6 +141,9 @@ namespace OptigemLdapSync
             string baseDn;
             string requiredBaseDn;
 
+            string mitgliederBase = "ou=mitglieder," + this.configuration.LdapBenutzerBaseDn;
+            string externBase = "ou=extern," + this.configuration.LdapBenutzerBaseDn;
+
             if (disabled)
             {
                 requiredBaseDn = this.configuration.LdapInaktiveBenutzerBaseDn;
@@ -147,7 +152,7 @@ namespace OptigemLdapSync
             else
             {
                 requiredBaseDn = this.configuration.LdapBenutzerBaseDn;
-                baseDn = (kategorien.Any(k => k.Name == "Mitglied") ? "ou=mitglieder," : "ou=extern,") + requiredBaseDn;
+                baseDn = kategorien.Any(k => k.Name == "Mitglied") ? mitgliederBase : externBase;
             }
 
             string cn = LdapBuilder.GetCn(model.Username);
@@ -181,7 +186,9 @@ namespace OptigemLdapSync
 
                 Log.Source.TraceEvent(TraceEventType.Verbose, 0, "Syncing LDAP user '{0}'.", oldDn);
 
-                if (!oldDn.EndsWith(requiredBaseDn))
+                if (!oldDn.EndsWith(requiredBaseDn)
+                    || (oldBaseDn == externBase && baseDn == mitgliederBase)
+                    || (oldBaseDn == mitgliederBase && baseDn == externBase))
                 {
                     this.ldap.MoveEntry(oldDn, baseDn, $"cn={cn}");
                     Log.Source.TraceEvent(TraceEventType.Information, 0, "Moved LDAP user from '{0}' to '{1}'.", oldDn, dn);
@@ -189,6 +196,10 @@ namespace OptigemLdapSync
                 }
                 else
                 {
+                    // User was not moved. Set baseDn to actual baseDn.
+                    baseDn = oldBaseDn;
+                    dn = $"cn={cn},{baseDn}";
+
                     string oldCn = entry.Attributes["cn"][0]?.ToString();
                     if (oldCn != cn)
                     {

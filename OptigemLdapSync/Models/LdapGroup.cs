@@ -15,6 +15,7 @@ namespace OptigemLdapSync.Models
 
         public LdapGroup()
         {
+            this.originalMembers = new ReadOnlyCollection<string>(new string[0]);
         }
 
         public LdapGroup(SearchResultEntry entry)
