@@ -46,26 +46,26 @@ namespace OptigemLdapSync
             this.groups = new GroupWorker(this.configuration, this.ldap, this.optigem);
         }
 
-        public SyncResult Do(ITaskReporter reporter)
+        public SyncResult Do(ITaskReporter reporter, bool fullSync)
+        {
+            string logName = "SyncLog_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".log";
+            using (var wrappedReport = new LoggingReporter(Path.Combine(this.logDir.FullName, logName), reporter))
+            {
+                return this.InternalDo(wrappedReport, fullSync);
+            }
+        }
+
+        private SyncResult InternalDo(ITaskReporter reporter, bool fullSync)
         {
             if (reporter == null)
                 throw new ArgumentNullException(nameof(reporter));
 
-            string logName = "SyncLog_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".log";
-            using (var wrappedReport = new LoggingReporter(Path.Combine(this.logDir.FullName, logName), reporter))
-            {
-                return this.InternalDo(wrappedReport);
-            }
-        }
-
-        private SyncResult InternalDo(ITaskReporter reporter)
-        { 
             // 1: Group metadata
             // 2: Prepare new users
             // 3: Sync users
             // 4: Check orphans
             // 5: Syng group membership
-            reporter.Init(5);
+            reporter.Init(fullSync ? 5 : 3);
 
             // Read LDAP groups and sync meta data.
             this.groups.SyncMetadata(reporter);
@@ -75,8 +75,11 @@ namespace OptigemLdapSync
 
             var result = new SyncResult();
 
-            // Create sync meta data in Optigem for new users.
-            result.Created = this.CreateNewLdapUsers(reporter);
+            if (fullSync)
+            {
+                // Create sync meta data in Optigem for new users.
+                result.Created = this.CreateNewLdapUsers(reporter);
+            }
 
             IList<PersonModel> persons = this.optigem.GetAllPersons()
                 .ToList();
@@ -93,9 +96,9 @@ namespace OptigemLdapSync
                 reporter.Progress(person.Username);
 
                 var existingUser = allPersonUsers.FirstOrDefault(u => u.Attributes["syncuserid"][0]?.ToString() == person.SyncUserId.ToString());
-                this.SyncUser(reporter, person, existingUser);
+                this.SyncUser(reporter, person, existingUser, fullSync);
 
-                if (person.Aenderung)
+                if (person.Aenderung && fullSync)
                 {
                     this.optigem.SetChangedFlag(person.Nr, false);
                 }
@@ -106,11 +109,14 @@ namespace OptigemLdapSync
                 }
             }
 
-            reporter.StartTask("Offene LDAP-Benutzer abgleichen", allPersonUsers.Count);
-            foreach (SearchResultEntry entry in allPersonUsers)
+            if (fullSync)
             {
-                reporter.Progress(entry.DistinguishedName);
-                reporter.Log("Manual action required.");
+                reporter.StartTask("Offene LDAP-Benutzer abgleichen", allPersonUsers.Count);
+                foreach (SearchResultEntry entry in allPersonUsers)
+                {
+                    reporter.Progress(entry.DistinguishedName);
+                    reporter.Log("Manual action required.");
+                }
             }
 
             this.groups.SyncMembership(reporter);
@@ -148,7 +154,7 @@ namespace OptigemLdapSync
             return 0;
         }
 
-        private void SyncUser(ITaskReporter reporter, PersonModel model, SearchResultEntry entry)
+        private void SyncUser(ITaskReporter reporter, PersonModel model, SearchResultEntry entry, bool fullSync)
         {
             ICollection<PersonenkategorieModel> kategorien = this.groups.GetKategorien(model.Nr);
                 // this.optigem.GetPersonenkategorien(model.Nr).ToList();
@@ -227,27 +233,30 @@ namespace OptigemLdapSync
                     }
                 }
 
-                var diffAttributes = LdapBuilder.GetDiff(
-                        LdapBuilder.GetUpdateAttributes(model),
-                        entry,
-                        LdapBuilder.CreateAttributes.Union(new[] { "cn", "dn" }).ToArray())
-                    .ToArray();
-
-                if (diffAttributes.Any())
+                if (fullSync)
                 {
-                    this.ldap.ModifyEntry(dn, diffAttributes);
-                    Log.Source.TraceEvent(TraceEventType.Information, 0, "Updated LDAP user '{0}'.", dn);
-                    foreach (var diff in diffAttributes)
-                    {
-                        var oldAttr = entry.Attributes.Values?.OfType<DirectoryAttribute>().FirstOrDefault(a => string.Equals(a.Name, diff.Name, StringComparison.InvariantCultureIgnoreCase));
-                        string oldValue = oldAttr == null ? string.Empty : string.Join("', '", oldAttr.GetValues<string>());
-                        Debug.Assert(oldValue != string.Join("', '", diff.GetValues<string>()));
-                        reporter.Log($"{diff.Name} auf '{string.Join("', '", diff.GetValues<string>())}' gesetzt (alt: '{oldValue}').");
-                    }
+                    var diffAttributes = LdapBuilder.GetDiff(
+                            LdapBuilder.GetUpdateAttributes(model),
+                            entry,
+                            LdapBuilder.CreateAttributes.Union(new[] { "cn", "dn" }).ToArray())
+                        .ToArray();
 
-                    foreach (string attributeChange in diffAttributes.SelectMany(Log.Print))
+                    if (diffAttributes.Any())
                     {
-                        Log.Source.TraceEvent(TraceEventType.Verbose, 0, "Updated LDAP user '{0}': {1}", cn, attributeChange);
+                        this.ldap.ModifyEntry(dn, diffAttributes);
+                        Log.Source.TraceEvent(TraceEventType.Information, 0, "Updated LDAP user '{0}'.", dn);
+                        foreach (var diff in diffAttributes)
+                        {
+                            var oldAttr = entry.Attributes.Values?.OfType<DirectoryAttribute>().FirstOrDefault(a => string.Equals(a.Name, diff.Name, StringComparison.InvariantCultureIgnoreCase));
+                            string oldValue = oldAttr == null ? string.Empty : string.Join("', '", oldAttr.GetValues<string>());
+                            Debug.Assert(oldValue != string.Join("', '", diff.GetValues<string>()));
+                            reporter.Log($"{diff.Name} auf '{string.Join("', '", diff.GetValues<string>())}' gesetzt (alt: '{oldValue}').");
+                        }
+
+                        foreach (string attributeChange in diffAttributes.SelectMany(Log.Print))
+                        {
+                            Log.Source.TraceEvent(TraceEventType.Verbose, 0, "Updated LDAP user '{0}': {1}", cn, attributeChange);
+                        }
                     }
                 }
             }

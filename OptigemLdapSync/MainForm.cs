@@ -24,7 +24,7 @@ namespace OptigemLdapSync
 
             try
             {
-                engine.Do(this);
+                engine.Do(this, true);
             }
             catch (LdapException exception)
             {
