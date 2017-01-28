@@ -31,6 +31,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.prgTasks = new System.Windows.Forms.ProgressBar();
             this.prgDetails = new System.Windows.Forms.ProgressBar();
             this.lblPrgTasks = new System.Windows.Forms.Label();
@@ -43,8 +44,8 @@
             this.pnlTop = new System.Windows.Forms.Panel();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
-            this.pcbLogo = new System.Windows.Forms.PictureBox();
             this.btnSettings = new System.Windows.Forms.Button();
+            this.pcbLogo = new System.Windows.Forms.PictureBox();
             this.pnlTop.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pcbLogo)).BeginInit();
             this.SuspendLayout();
@@ -177,16 +178,6 @@
             this.label1.TabIndex = 1;
             this.label1.Text = "OPTIGEM -> LDAP Sync";
             // 
-            // pcbLogo
-            // 
-            this.pcbLogo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.pcbLogo.Image = global::OptigemLdapSync.Properties.Resources.OptigemLdapSyncLogo;
-            this.pcbLogo.Location = new System.Drawing.Point(398, 10);
-            this.pcbLogo.Name = "pcbLogo";
-            this.pcbLogo.Size = new System.Drawing.Size(207, 69);
-            this.pcbLogo.TabIndex = 0;
-            this.pcbLogo.TabStop = false;
-            // 
             // btnSettings
             // 
             this.btnSettings.Location = new System.Drawing.Point(12, 153);
@@ -196,6 +187,16 @@
             this.btnSettings.Text = "Einstellungen...";
             this.btnSettings.UseVisualStyleBackColor = true;
             this.btnSettings.Click += new System.EventHandler(this.OnSettingsClick);
+            // 
+            // pcbLogo
+            // 
+            this.pcbLogo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.pcbLogo.Image = global::OptigemLdapSync.Properties.Resources.OptigemLdapSyncLogo;
+            this.pcbLogo.Location = new System.Drawing.Point(398, 10);
+            this.pcbLogo.Name = "pcbLogo";
+            this.pcbLogo.Size = new System.Drawing.Size(207, 69);
+            this.pcbLogo.TabIndex = 0;
+            this.pcbLogo.TabStop = false;
             // 
             // MainForm
             // 
@@ -213,6 +214,7 @@
             this.Controls.Add(this.prgDetails);
             this.Controls.Add(this.lblPrgDetails);
             this.Controls.Add(this.lblPrgTasks);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(540, 450);
             this.Name = "MainForm";
             this.Text = "OPTIGEM -> LDAP Sync";
