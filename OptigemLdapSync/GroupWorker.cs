@@ -50,7 +50,7 @@ namespace OptigemLdapSync
 
             this.zuordnungen = this.optigem.GetAllKategorieZuordnungen().ToList();
             
-            reporter.StartTask("Personenkategorien abgleichen", categories.Count);
+            reporter.StartTask("Personenkategorien abgleichen", categories.Count + 1);
 
             this.groups = this.GetLdapGroups();
             Log.Source.TraceEvent(TraceEventType.Verbose, 0, "Fetched {0} groups from LDAP.", this.groups.Count);
@@ -72,7 +72,10 @@ namespace OptigemLdapSync
                     if (category.Name != name)
                     {
                         this.ldap.MoveEntry($"cn={group.Name},{this.configuration.LdapGruppenBaseDn}", this.configuration.LdapGruppenBaseDn, $"cn={name}");
+
                         Log.Source.TraceEvent(TraceEventType.Information, 0, "Updated group name from '{0}' to '{1}'.", group.Name, name);
+                        reporter.Log($"Updated group name from '{group.Name}' to '{name}'.");
+
                         group.Name = name;
                     }
 
@@ -92,6 +95,7 @@ namespace OptigemLdapSync
                         });
 
                     Log.Source.TraceEvent(TraceEventType.Information, 0, "Added new group '{0}'.", groupDn);
+                    reporter.Log($"Added new group '{groupDn}'.");
 
                     if (this.configuration.LdapDefaultParentGroups != null)
                     {
@@ -105,6 +109,7 @@ namespace OptigemLdapSync
                                 new[] { addAttribute });
 
                             Log.Source.TraceEvent(TraceEventType.Information, 0, "Added new group '{0}' to parent group '{1}'.", name, parentGroupDn);
+                            reporter.Log($"Added new group '{name}' to parent group '{parentGroupDn}'.");
                         }
                     }
 
@@ -112,11 +117,14 @@ namespace OptigemLdapSync
                 }
             }
 
+            reporter.Progress("Checking for obsolete groups...");
+
             // Remove obsolete groups
             foreach (var group in openGroups)
             {
                 this.ldap.DeleteEntry($"cn={group.Name},{this.configuration.LdapGruppenBaseDn}");
                 Log.Source.TraceEvent(TraceEventType.Information, 0, "Deleted obsolete group '{0}'.", group.Name);
+                reporter.Log($"Deleted obsolete group '{group.Name}'.");
                 groups.Remove(group);
             }
         }
