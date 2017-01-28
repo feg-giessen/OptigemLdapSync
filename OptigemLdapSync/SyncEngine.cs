@@ -18,6 +18,8 @@ namespace OptigemLdapSync
 
         private readonly GroupWorker groups;
 
+        private readonly DirectoryInfo logDir;
+
         public SyncEngine(ISyncConfiguration configuration)
         {
             if (configuration == null)
@@ -26,6 +28,12 @@ namespace OptigemLdapSync
             this.configuration = configuration;
 
             this.optigem = new OptigemConnector(this.configuration.OptigemDatabasePath);
+            this.logDir = new DirectoryInfo(Path.Combine(this.configuration.OptigemDatabasePath, "syncLogs"));
+
+            if (!this.logDir.Exists)
+            {
+                this.logDir.Create();
+            }
 
             string ldapConnection = this.optigem.GetLdapConnectionString();
 
@@ -43,6 +51,15 @@ namespace OptigemLdapSync
             if (reporter == null)
                 throw new ArgumentNullException(nameof(reporter));
 
+            string logName = "SyncLog_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".log";
+            using (var wrappedReport = new LoggingReporter(Path.Combine(this.logDir.FullName, logName), reporter))
+            {
+                return this.InternalDo(wrappedReport);
+            }
+        }
+
+        private SyncResult InternalDo(ITaskReporter reporter)
+        { 
             // 1: Group metadata
             // 2: Prepare new users
             // 3: Sync users

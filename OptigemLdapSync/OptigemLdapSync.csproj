@@ -71,6 +71,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="ITaskReporter.cs" />
     <Compile Include="ListViewExtender.cs" />
+    <Compile Include="LoggingReporter.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
