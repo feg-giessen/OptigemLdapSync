@@ -14,7 +14,7 @@
 
         public string LdapSyncGroupSource { get; } = "og_categories";
 
-        public string OptigemDatabasePath { get; } = @"C:\temp\optigem";
+        public string OptigemDatabasePath { get; } = System.Configuration.ConfigurationManager.AppSettings["OptigemDatabasePath"];
 
         public string[] LdapDefaultParentGroups { get; } = { "cn=ownCloud,ou=gruppen,dc=feg-giessen,dc=de" };
     }
