@@ -70,7 +70,7 @@ namespace OptigemLdapSync
 
                     if (result)
                     {
-                        MessageBox.Show("Das Passwort für den Benutzer wurde zurück gesetzt.", "Passwort zurückgesetzt...", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Das Passwort für den Benutzer wurde zurück gesetzt (siehe Feld in OPTIGEM).", "Passwort zurückgesetzt...", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else
                     {

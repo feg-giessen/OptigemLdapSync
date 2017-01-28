@@ -174,9 +174,9 @@
             this.label1.ForeColor = System.Drawing.SystemColors.Highlight;
             this.label1.Location = new System.Drawing.Point(16, 19);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(268, 25);
+            this.label1.Size = new System.Drawing.Size(307, 25);
             this.label1.TabIndex = 1;
-            this.label1.Text = "OPTIGEM -> LDAP Sync";
+            this.label1.Text = "OPTIGEM -> LDAP Abgleich";
             // 
             // btnSettings
             // 
@@ -217,7 +217,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(540, 450);
             this.Name = "MainForm";
-            this.Text = "OPTIGEM -> LDAP Sync";
+            this.Text = "OPTIGEM -> LDAP Abgleich";
             this.pnlTop.ResumeLayout(false);
             this.pnlTop.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pcbLogo)).EndInit();
