@@ -37,7 +37,20 @@ namespace OptigemLdapSync
         {
             yield return new DirectoryAttribute("cn", GetCn(model.Username));
 
-            yield return new DirectoryAttribute("displayname", (model.Nachname + ", " + model.Vorname).Trim().Trim(','));
+            if (!string.IsNullOrWhiteSpace(model.Titel))
+            {
+                // Namenszusätze (von, zu, de, ...) sind auch im titel Feld gespeichert.
+                // Diese könnne auch mit echten Titeln kombiniert sein (z.B. "Dr. von Mustermann").
+                // Daher filtern wird die Titel hier raus und verwenden dann nur noch die echten Namenszusätze.
+                string titel = Regex.Replace(model.Titel, @"\w+\.\s*", string.Empty).Trim();
+
+                if (!string.IsNullOrWhiteSpace(titel))
+                    yield return new DirectoryAttribute("displayname", (titel + " " + model.Nachname?.Trim() + ", " + model.Vorname).Trim().Trim(','));
+                else
+                    yield return new DirectoryAttribute("displayname", (model.Nachname + ", " + model.Vorname).Trim().Trim(','));
+            }
+            else
+                yield return new DirectoryAttribute("displayname", (model.Nachname + ", " + model.Vorname).Trim().Trim(','));
             yield return new DirectoryAttribute("givenname", model.Vorname);
             yield return new DirectoryAttribute("sn", model.Nachname);
 
