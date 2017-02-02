@@ -70,7 +70,8 @@ namespace OptigemLdapSync
                 if (!string.IsNullOrWhiteSpace(model.Plz))
                     yield return new DirectoryAttribute("postalcode", model.Plz);
 
-                yield return new DirectoryAttribute("c", string.IsNullOrEmpty(model.Land) ? "Germany" : model.Land.SanitizeSingleLine());
+                if (!string.IsNullOrWhiteSpace(model.Land))
+                    yield return new DirectoryAttribute("c", model.Land.SanitizeSingleLine());
             }
 
             if (!string.IsNullOrWhiteSpace(model.Telefon))
