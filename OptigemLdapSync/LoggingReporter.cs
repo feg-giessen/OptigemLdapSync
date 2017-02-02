@@ -9,6 +9,8 @@ namespace OptigemLdapSync
 
         private StreamWriter writer;
 
+        private string pendingProgress = null;
+
         public LoggingReporter(string logFile, ITaskReporter wrappedReporter)
         {
             this.wrappedReporter = wrappedReporter;
@@ -39,12 +41,18 @@ namespace OptigemLdapSync
 
         public void Progress(string text)
         {
-            this.writer.WriteLine("  " + text);
+            this.pendingProgress = text;
             this.wrappedReporter?.Progress(text);
         }
 
         public void Log(string text)
         {
+            if (this.pendingProgress != null)
+            {
+                this.writer.WriteLine("  " + this.pendingProgress);
+                this.pendingProgress = null;
+            }
+
             this.writer.WriteLine("    " + text);
             this.wrappedReporter?.Log(text);
         }
