@@ -38,7 +38,7 @@ namespace OptigemLdapSync.Models
                 this.MemberList.AddRange(entry.Attributes["member"].OfType<string>());
             }
 
-            this.originalMembers = new ReadOnlyCollection<string>(this.MemberList);
+            this.originalMembers = new ReadOnlyCollection<string>(this.MemberList.ToList());
             this.MemberList.Clear();
         }
 
