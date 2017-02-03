@@ -131,9 +131,10 @@ namespace OptigemLdapSync
 
         public void SyncMembership(ITaskReporter reporter)
         {
-            reporter.StartTask("Gruppenmitgliedschaften abgleichen", this.groups.Count);
+            var filteredGroups = this.groups.Where(g => g.SyncGroupSource == this.configuration.LdapSyncGroupSource).ToList();
+            reporter.StartTask("Gruppenmitgliedschaften abgleichen", filteredGroups.Count);
 
-            foreach (var group in this.groups)
+            foreach (var group in filteredGroups)
             {
                 reporter.Progress(group.Name);
 
@@ -175,7 +176,7 @@ namespace OptigemLdapSync
             if (optigemCategory == null)
                 return null;
 
-            return this.groups.FirstOrDefault(g => g.SyncGroupId == optigemCategory.Id);
+            return this.groups.FirstOrDefault(g => g.SyncGroupSource == this.configuration.LdapSyncGroupSource && g.SyncGroupId == optigemCategory.Id);
         }
 
         public ICollection<PersonenkategorieModel> GetKategorien(int personId)
