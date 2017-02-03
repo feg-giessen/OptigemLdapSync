@@ -25,6 +25,9 @@ namespace OptigemLdapSync
             try
             {
                 engine.Do(this, true);
+                
+                this.lblPrgTasks.Text = string.Empty;
+                this.lblPrgDetails.Text = string.Empty;
             }
             catch (LdapException exception)
             {
