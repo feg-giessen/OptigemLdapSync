@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.DirectoryServices.Protocols;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using OptigemLdapSync.Models;
@@ -135,9 +136,9 @@ namespace OptigemLdapSync
 
                 foreach (var person in persons)
                 {
-                    reporter.Progress(person.Username);
+                    string username = LdapBuilder.GetCn((person.Vorname?.Trim() + "." + person.Nachname?.Trim()).Trim('.')).ToLower(CultureInfo.CurrentCulture);
 
-                    string username = LdapBuilder.GetCn((person.Vorname?.Trim() + "." + person.Nachname?.Trim()).Trim('.'));
+                    reporter.Progress(username);
 
                     person.Username = username.Length > 50 ? username.Substring(0, 50) : username;
                     person.Password = this.CalculatePassword();

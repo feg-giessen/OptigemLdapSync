@@ -81,7 +81,7 @@ Spender.OutlookAdrBuchAenderFlag as Aenderung";
             {
                 connection.Open();
 
-                int lastId = (int)connection.ExecuteScalar("SELECT Max(bdF4) FROM Spender WHERE bdF4 IS NOT NULL");
+                int lastId = (int)connection.ExecuteScalar("SELECT CLng(Max(bdF4)) FROM Spender WHERE bdF4 IS NOT NULL");
 
                 return lastId + 1;
             }
