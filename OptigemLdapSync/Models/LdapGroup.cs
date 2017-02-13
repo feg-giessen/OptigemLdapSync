@@ -11,7 +11,7 @@ namespace OptigemLdapSync.Models
     [DebuggerDisplay("{Name} {SyncGroupSource} ({SyncGroupId}) Member: {MemberList.Count}")]
     public class LdapGroup
     {
-        private readonly ICollection<string> originalMembers;
+        private ICollection<string> originalMembers;
 
         public LdapGroup()
         {
@@ -53,5 +53,12 @@ namespace OptigemLdapSync.Models
         public IEnumerable<string> AddedMembers => this.MemberList.Where(m => !this.originalMembers.Contains(m));
 
         public IEnumerable<string> RemovedMembers => this.originalMembers.Where(m => !this.MemberList.Contains(m));
+
+        public void SetOriginalMembers(IEnumerable<string> members)
+        {
+            this.originalMembers = new ReadOnlyCollection<string>(members?.ToList() ?? new List<string>());
+        }
+
+        public ICollection<string> OrginalMembers => this.originalMembers;
     }
 }

@@ -134,9 +134,19 @@ namespace OptigemLdapSync
             var filteredGroups = this.groups.Where(g => g.SyncGroupSource == this.configuration.LdapSyncGroupSource).ToList();
             reporter.StartTask("Gruppenmitgliedschaften abgleichen", filteredGroups.Count);
 
+            // Refetch group members (might have been changed/renamed!).
+            var newGroups = this.GetLdapGroups();
+
             foreach (var group in filteredGroups)
             {
                 reporter.Progress(group.Name);
+
+                // Set base for diff with new values.
+                LdapGroup newGroup = newGroups.FirstOrDefault(g => g.SyncGroupId == group.SyncGroupId && g.SyncGroupSource == this.configuration.LdapSyncGroupSource);
+                if (newGroup != null)
+                {
+                    group.SetOriginalMembers(newGroup.OrginalMembers);
+                }
 
                 DirectoryAttributeModification[] addedMembers = group.AddedMembers
                     .Select(m => new DirectoryAttribute("member", m).CreateModification(DirectoryAttributeOperation.Add))
