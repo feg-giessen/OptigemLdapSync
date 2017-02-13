@@ -39,7 +39,7 @@ namespace OptigemLdapSync
                 .Union(other.Except(self));
         }
 
-        public static DirectoryAttributeModification CreateModification(this DirectoryAttribute item, DirectoryAttributeOperation operation)
+        public static DirectoryAttributeModification CreateModification(this DirectoryAttribute item, DirectoryAttributeOperation operation, bool forceValue = false)
         {
             var result = new DirectoryAttributeModification
             {
@@ -47,7 +47,8 @@ namespace OptigemLdapSync
                 Operation = operation
             };
 
-            if (operation != DirectoryAttributeOperation.Delete)
+            // Delete needs a value here!?
+            if (operation != DirectoryAttributeOperation.Delete || forceValue)
             {
                 result.AddRange(item.GetValues(typeof(byte[])));
             }

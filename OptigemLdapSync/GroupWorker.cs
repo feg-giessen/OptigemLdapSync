@@ -144,7 +144,7 @@ namespace OptigemLdapSync
 
                 DirectoryAttributeModification[] removedMembers = group.RemovedMembers
                     .Where(m => !m.EndsWith(this.configuration.LdapGruppenBaseDn))
-                    .Select(m => new DirectoryAttribute("member", m).CreateModification(DirectoryAttributeOperation.Delete))
+                    .Select(m => new DirectoryAttribute("member", m).CreateModification(DirectoryAttributeOperation.Delete, forceValue: true))
                     .ToArray();
 
                 if (addedMembers.Any() || removedMembers.Any())
