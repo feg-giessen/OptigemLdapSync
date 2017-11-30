@@ -14,14 +14,14 @@ namespace OptigemLdapSync
     {
         private const string LdapDateTimeFormat = @"yyyyMMddHHmmss'Z'";
 
-        public static readonly string[] AllAttributes = { "dn", "objectclass", "syncuserid", "syncusersource", "userpassword", "cn", "displayname", "givenname", "sn", "title", "gender", "street", "l", "postalcode", "c", "telephonenumber", "facsimiletelephonenumber", "mail", "dateofbirth", "startdate", "enddate" };
+        public static readonly string[] AllAttributes = { "dn", "objectclass", "syncuserid", "syncusersource", "userpassword", "cn", "displayname", "givenname", "sn", "title", "gender", "street", "l", "postalcode", "c", "telephonenumber", "facsimiletelephonenumber", "mail", "dateofbirth", "startdate", "enddate", "typo3disabled" };
 
         public static readonly string[] CreateAttributes = { "objectclass", "syncuserid", "syncusersource", "userpassword" };
 
-        public static IEnumerable<DirectoryAttribute> GetAllAttributes(PersonModel model)
+        public static IEnumerable<DirectoryAttribute> GetAllAttributes(PersonModel model, bool disabled)
         {
             return GetCreateAttributes(model)
-                .Concat(GetUpdateAttributes(model));
+                .Concat(GetUpdateAttributes(model, disabled));
         }
 
         public static IEnumerable<DirectoryAttribute> GetCreateAttributes(PersonModel model)
@@ -33,7 +33,7 @@ namespace OptigemLdapSync
             yield return new DirectoryAttribute("userpassword", GenerateSaltedSha1(model.Password));
         }
 
-        public static IEnumerable<DirectoryAttribute> GetUpdateAttributes(PersonModel model)
+        public static IEnumerable<DirectoryAttribute> GetUpdateAttributes(PersonModel model, bool disabled)
         {
             yield return new DirectoryAttribute("cn", GetCn(model.Username));
 
@@ -93,10 +93,12 @@ namespace OptigemLdapSync
                 yield return new DirectoryAttribute("startdate", model.StartDatum.Value.Date.ToString(LdapDateTimeFormat));
             }
 
-            if (model.EndDatum.HasValue)
+            if (model.EndDatum.HasValue && (!model.StartDatum.HasValue || model.EndDatum.Value > model.StartDatum.Value))
             {
                 yield return new DirectoryAttribute("enddate", model.EndDatum.Value.Date.ToString(LdapDateTimeFormat));
             }
+
+            yield return new DirectoryAttribute("typo3disabled", disabled ? "TRUE" : "FALSE");
         }
 
         public static IEnumerable<DirectoryAttributeModification> GetDiff(IEnumerable<DirectoryAttribute> latest, SearchResultEntry existing, string[] omittedAttributes = null)

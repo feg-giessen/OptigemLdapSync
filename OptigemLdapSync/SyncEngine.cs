@@ -191,7 +191,7 @@ namespace OptigemLdapSync
 
                 if (searchResult.Length == 0)
                 {
-                    DirectoryAttribute[] attributes = LdapBuilder.GetAllAttributes(model).ToArray();
+                    DirectoryAttribute[] attributes = LdapBuilder.GetAllAttributes(model, disabled).ToArray();
 
                     this.ldap.AddEntry(dn, attributes);
                     Log.Source.TraceEvent(TraceEventType.Information, 0, "Added new LDAP user '{0}'.", dn);
@@ -234,30 +234,41 @@ namespace OptigemLdapSync
                     }
                 }
 
+                DirectoryAttributeModification[] diffAttributes = null;
+
                 if (fullSync)
                 {
-                    var diffAttributes = LdapBuilder.GetDiff(
-                            LdapBuilder.GetUpdateAttributes(model),
+                    diffAttributes = LdapBuilder.GetDiff(
+                            LdapBuilder.GetUpdateAttributes(model, disabled),
                             entry,
                             LdapBuilder.CreateAttributes.Union(new[] { "cn", "dn" }).ToArray())
                         .ToArray();
+                }
+                else
+                {
+                    // only update disabled attribute
+                    diffAttributes = LdapBuilder.GetDiff(
+                            LdapBuilder.GetUpdateAttributes(model, disabled),
+                            entry,
+                            LdapBuilder.AllAttributes.Except(new[] { "typo3disabled" }).ToArray())
+                        .ToArray();
+                }
 
-                    if (diffAttributes.Any())
+                if (diffAttributes?.Any() ?? false)
+                {
+                    this.ldap.ModifyEntry(dn, diffAttributes);
+                    Log.Source.TraceEvent(TraceEventType.Information, 0, "Updated LDAP user '{0}'.", dn);
+                    foreach (var diff in diffAttributes)
                     {
-                        this.ldap.ModifyEntry(dn, diffAttributes);
-                        Log.Source.TraceEvent(TraceEventType.Information, 0, "Updated LDAP user '{0}'.", dn);
-                        foreach (var diff in diffAttributes)
-                        {
-                            var oldAttr = entry.Attributes.Values?.OfType<DirectoryAttribute>().FirstOrDefault(a => string.Equals(a.Name, diff.Name, StringComparison.InvariantCultureIgnoreCase));
-                            string oldValue = oldAttr == null ? string.Empty : string.Join("', '", oldAttr.GetValues<string>());
-                            Debug.Assert(oldValue != string.Join("', '", diff.GetValues<string>()));
-                            reporter.Log($"{diff.Name} auf '{string.Join("', '", diff.GetValues<string>())}' gesetzt (alt: '{oldValue}').");
-                        }
+                        var oldAttr = entry.Attributes.Values?.OfType<DirectoryAttribute>().FirstOrDefault(a => string.Equals(a.Name, diff.Name, StringComparison.InvariantCultureIgnoreCase));
+                        string oldValue = oldAttr == null ? string.Empty : string.Join("', '", oldAttr.GetValues<string>());
+                        Debug.Assert(oldValue != string.Join("', '", diff.GetValues<string>()));
+                        reporter.Log($"{diff.Name} auf '{string.Join("', '", diff.GetValues<string>())}' gesetzt (alt: '{oldValue}').");
+                    }
 
-                        foreach (string attributeChange in diffAttributes.SelectMany(Log.Print))
-                        {
-                            Log.Source.TraceEvent(TraceEventType.Verbose, 0, "Updated LDAP user '{0}': {1}", cn, attributeChange);
-                        }
+                    foreach (string attributeChange in diffAttributes.SelectMany(Log.Print))
+                    {
+                        Log.Source.TraceEvent(TraceEventType.Verbose, 0, "Updated LDAP user '{0}': {1}", cn, attributeChange);
                     }
                 }
             }
@@ -289,7 +300,8 @@ namespace OptigemLdapSync
                 if (model.StartDatum.HasValue && model.StartDatum.Value > DateTime.Now)
                     return true;
 
-                if (model.EndDatum.HasValue && model.EndDatum.Value < DateTime.Now)
+                if (model.EndDatum.HasValue && model.EndDatum.Value < DateTime.Now
+                    && (!model.StartDatum.HasValue || model.EndDatum.Value >= model.StartDatum.Value))
                     return true;
             }
 
