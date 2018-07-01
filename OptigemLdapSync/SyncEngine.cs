@@ -182,6 +182,20 @@ namespace OptigemLdapSync
             string cn = LdapBuilder.GetCn(model.Username);
             string dn = $"cn={cn},{baseDn}";
 
+            if (disabled && model.EndDatum.HasValue && model.EndDatum.Value < DateTime.Today.AddYears(-2))
+            {
+                // More than two years inactive => delete in LDAP
+
+                // No entry in LDAP => ok, NOP
+                if (entry != null)
+                {
+                    reporter.Log($"Benutzer wird gelöscht (mehr als 2 Jahre inaktiv): {dn}");
+                    this.ldap.DeleteEntry(dn);
+                }
+
+                return;
+            }
+
             if (entry == null)
             {
                 SearchResultEntry[] searchResult = this.ldap
