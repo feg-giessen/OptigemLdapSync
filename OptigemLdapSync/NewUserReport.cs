@@ -75,7 +75,7 @@ namespace OptigemLdapSync
             pdfdoc.Add(header);
 
             pdfdoc.Add(new Paragraph(this.CreatePhrase(person.Briefanrede + ",")) { SpacingBefore = MillimetersToPoints(5) });
-            pdfdoc.Add(new Paragraph(this.CreatePhrase("die Internetseite der Gemeinde ist unter")) { SpacingBefore = MillimetersToPoints(2) });
+            pdfdoc.Add(new Paragraph(this.CreatePhrase("die Webadresse der Gemeinde lautet")) { SpacingBefore = MillimetersToPoints(2) });
 
             paragraph = new Paragraph(this.CreatePhrase("www.feg-giessen.de", StandardBoldFont))
             {
@@ -116,79 +116,8 @@ namespace OptigemLdapSync
             pdfdoc.Add(new Paragraph(this.CreatePhrase("3.) Das per E-Mail zugeschickte persönliche, geheime Passwort ist einzugeben")));
             pdfdoc.Add(new Paragraph(this.CreatePhrase("4.) Klick auf \"Anmelden\" gewährt den Intranetzugang, erkennbar durch den Login-Namen oben rechts")));
 
-            pdfdoc.Add(new Paragraph(this.CreatePhrase("Nachdem der untere Abschnitt dieses Schreibens mit Kenntnisnahme der Datenschutzerklärung unterschrieben im Gemeindebüro (Fach) angekommen ist, wird an die bekannte bzw. noch anzugebende E-Mail-Adresse das Passwort verschickt (bitte vertraulich behandeln).")) { SpacingBefore = MillimetersToPoints(4), Alignment = Element.ALIGN_JUSTIFIED });
             pdfdoc.Add(new Paragraph(this.CreatePhrase("Und nun freuen wir uns über viele Besucher - und Rückmeldungen, wenn etwas gefällt, etwas fehlt, etwas falsch ist, oder irgendwas noch nicht ganz klappt :-). Das Online-Internet-Team ist unter internet@feg-giessen.de zu erreichen.")) { SpacingBefore = MillimetersToPoints(2), Alignment = Element.ALIGN_JUSTIFIED });
             pdfdoc.Add(new Paragraph(this.CreatePhrase("Freunde, Gäste, Sucher und Besucher können natürlich gerne auf die öffentliche Website hingewiesen werden. Dort sind stets die aktuellen Informationen über unsere Gemeinde zu finden.")) { SpacingBefore = MillimetersToPoints(2), SpacingAfter = MillimetersToPoints(5), Alignment = Element.ALIGN_JUSTIFIED });
-            
-            CustomDashedLineSeparator separator = new CustomDashedLineSeparator
-            {
-                Dash = 10,
-                Gap = 7,
-                LineWidth = 1
-            };
-            pdfdoc.Add(new Chunk(separator));
-
-            paragraph = new Paragraph(this.CreatePhrase("An das Gemeindebüro der FeG-Gießen", this.TitleFont))
-            {
-                SpacingBefore = MillimetersToPoints(5),
-                Alignment = Element.ALIGN_CENTER
-            };
-            pdfdoc.Add(paragraph);
-
-            paragraph = new Paragraph(this.CreatePhrase("Bitte die Angaben unten prüfen, und ggf. rechts daneben berichtigen, falls nicht korrekt."))
-            {
-                Alignment = Element.ALIGN_CENTER
-            };
-            pdfdoc.Add(paragraph);
-
-            table = new PdfPTable(2)
-            {
-                WidthPercentage = 100,
-                HeaderRows = 0,
-                SpacingBefore = MillimetersToPoints(7),
-                SpacingAfter = MillimetersToPoints(4)
-            };
-
-            table.DefaultCell.Border = Rectangle.NO_BORDER;
-
-            table.SetTotalWidth(new[] { 1f, 5f });
-
-            table.AddCell(this.CreatePhrase("Straße", this.StandardFont));
-            table.AddCell(this.CreatePhrase(person.Strasse));
-            table.CompleteRow();
-            table.AddCell(this.CreatePhrase("PLZ Ort", this.StandardFont));
-            table.AddCell(this.CreatePhrase(person.Plz + " " + person.Ort));
-            table.CompleteRow();
-            table.AddCell(this.CreatePhrase("Zusatzort", this.StandardFont));
-            table.AddCell(this.CreatePhrase(person.Zusatzort));
-            table.CompleteRow();
-            table.AddCell(this.CreatePhrase("Land", this.StandardFont));
-            table.AddCell(this.CreatePhrase(person.Land));
-            table.CompleteRow();
-            table.AddCell(this.CreatePhrase("E-Mail", this.StandardFont));
-            table.AddCell(this.CreatePhrase(person.EMail));
-            table.CompleteRow();
-            table.AddCell(this.CreatePhrase("Telefon", this.StandardFont));
-            table.AddCell(this.CreatePhrase(person.Telefon));
-            table.CompleteRow();
-            table.AddCell(this.CreatePhrase("Telefax", this.StandardFont));
-            table.AddCell(this.CreatePhrase(person.Telefax));
-            table.CompleteRow();
-            table.AddCell(this.CreatePhrase("Handy", this.StandardFont));
-            table.AddCell(this.CreatePhrase(person.Mobiltelefon));
-            table.CompleteRow();
-
-            pdfdoc.Add(table);
-
-            pdfdoc.Add(new Paragraph(this.CreatePhrase("Die beigefügte Erklärung zum Datenschutz habe ich zur Kenntnis genommen, erkläre mein Einverständnis dazu, und bitte um Zusendung des Passworts.")));
-
-            pdfdoc.Add(new Paragraph(this.CreatePhrase("Datum, Unterschrift: __________________________________________")) { SpacingBefore = MillimetersToPoints(10) });
-
-            paragraph = new Paragraph(this.CreatePhrase(person.Vorname + " " + person.Nachname))
-            {
-                IndentationLeft = MillimetersToPoints(50)
-            };
-            pdfdoc.Add(paragraph);
 
             pdfdoc.Close();
             writer.Flush();
