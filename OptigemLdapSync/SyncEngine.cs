@@ -189,8 +189,15 @@ namespace OptigemLdapSync
                 // No entry in LDAP => ok, NOP
                 if (entry != null)
                 {
-                    reporter.Log($"Benutzer wird gelöscht (mehr als 2 Jahre inaktiv): {entry.DistinguishedName}");
-                    this.ldap.DeleteEntry(entry.DistinguishedName);
+                    try
+                    {
+                        reporter.Log($"Benutzer wird gelöscht (mehr als 2 Jahre inaktiv): {entry.DistinguishedName}");
+                        this.ldap.DeleteEntry(entry.DistinguishedName);
+                    }
+                    catch (Exception exception)
+                    {
+                        reporter.Log($"Beim Versuch den Benutzer {cn} zu löschen ist ein Fehler aufgetreten: {exception.Message}");
+                    }
                 }
 
                 return;
