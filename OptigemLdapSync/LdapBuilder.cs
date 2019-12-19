@@ -159,7 +159,10 @@ namespace OptigemLdapSync
                 return null;
 
             string[] parts = Regex.Split(input, @"\r|\r\n|\n");
-            return parts.Length > 0 ? parts[0] : input;
+            string value = parts.Length > 0 ? parts[0] : input;
+            
+            // Replace non-printable characters
+            return Regex.Replace(value, @"\p{C}+", string.Empty);
         }
 
         public static string GenerateSaltedSha1(this string plainTextString)
