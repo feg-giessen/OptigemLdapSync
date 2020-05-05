@@ -69,7 +69,7 @@ namespace OptigemLdapSync
 
                 if (group != null)
                 {
-                    if (category.Name != name)
+                    if (group.Name != name)
                     {
                         this.ldap.MoveEntry($"cn={group.Name},{this.configuration.LdapGruppenBaseDn}", this.configuration.LdapGruppenBaseDn, $"cn={name}");
 
